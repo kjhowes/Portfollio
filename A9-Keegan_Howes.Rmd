@@ -1,0 +1,114 @@
+---
+title: "A9-*Keegan Howes*"
+author: "by *Keegan Howes* (*301234292*)"
+date: '*insert date of submission*'
+output:
+  html_document: default
+  pdf_document: default
+  word_document: default
+---
+
+### Assignment 9 Instructions
+
+1. Read [Chapter 7](https://socviz.co/maps.html#maps) of SOCVIZ.
+
+2. Download the markdown file "A9-Your Name.Rmd" from Canvas. Change the name of the file so that your full name appears in the name of the file instead of the words "Your Name". Change the title and author information at the top to reflect your information.  **Independently** complete the steps in each section below, then *knit* your R Markdown Notebook into a ``.html`` file. Submit the completed ``.Rmd`` and ``.html`` file on Canvas. Submit the same ``.html`` file to the course Turnitin link. **Assignment 9 is due by 11:59PM on Sunday November 22. Assignments submitted late will lose one point per 10 minutes late. So 1 point will be deducted if submitted between 12:00-12:09 AM; -2 points 12:10-12:19 AM; ...; -9 points 1:20-1:29 (since assignments are out of 10, no credit for anything after 1:30)** 
+
+### Part 1: Integrity Statement and Assignment References
+
+In submitting this assignment to Canvas, I, **Keegan John Howes**, confirm that this work was independently completed and that I have appropriately listed all of my sources below. I understand that if any part of my answers (inlcluding the code I use) are similar enough to indicate non-independent work when compared to the answers from any other student in this course or from prior course materials, then I will receive zero points on this assignment. I also affirm that any answers or code copied or used from other resources online is appropriately referenced and if it is not appropriately referenced than I will receive zero points on this assignment. 
+
+I have used the following materials to complete this assignment: 
+1. [R4DS](https://r4ds.had.co.nz). 
+2. [SOCVIZ](https://socviz.co)
+3. Course lecture videos on Canvas
+4. **List any other websites, datasets, blogs, etc. used to complete your assignment. **
+
+NEW: I have used the following R packages to complete this assignment. To replicate, install these packages first.
+1.`tidyverse`
+2. `ggrepel`
+3. `usmap`
+4. `mapproj`
+5. `maps`
+6. `cowplot`
+
+
+
+
+### Part 2 
+
+```{r}
+library(tidyverse)
+library(ggrepel)
+library(usmap)
+library(mapproj)
+library(maps)
+library(cowplot)
+
+
+```
+
+
+For this assignment, we will be visualizing COVID-19 in U.S. states as well as COVID-19 in state and federal prisons in the U.S. Do your best to create the most clear and compelling visualizations possible. For a perfect score on this assignment, everything you produce must look great with axes labeled and clearly communicated visualizations. 
+
+1. Download the data representing COVID-19 in state and federal prisons in the US available on canvas through the "COVID_cases_deaths_in_prisons.csv" file. Calculate a new variable that is equal to the number of deaths per 100,000 prisoners (to calculate this you will divide the number of deaths by the prison population and multiply by 100,000). Create a visualization that best shows how the COVID-19 death rates across states. It is up to you how to visualize this and keep the end user in mind. Make the graph as illustrative and clear as possible. There are two states with missing values that you should remove and note this in a caption to the graph. Label all the axes. Your graph should be unique and not similar to any other submitted assignment. Comment on which states have the highest and lowest COVID-19 death rates inside of prisons. Note that there is one "state" called "Federal" which includes numbers for the federal prisons in the U.S. You can leave this in and include in your graph. 
+```{r q1, fig.width = 9, fig.height = 9}
+cov_pris <- read.csv("COVID_cases_deaths_in_prisons.csv")
+
+cov_pris <- mutate(cov_pris, d_per_cap = (prison_deaths/prison_pop) * 100000)
+cov_pris1 <- filter(cov_pris, !is.na(prison_deaths))
+ggplot(data = cov_pris1, mapping = aes(x = reorder(state, d_per_cap), y = d_per_cap, fill = state, colour = state)) +geom_col() +coord_flip() +labs(y = "Deaths per 100,000", x = "States", fill = "States", colour = "States", title ="Deaths per 100,000 for COVID-19 for Prisons in the United States", caption = "Data is missing for Wyoming and Maine so they are not present here")
+```
+
+**New Jersey and Arkansas have the highest death rate per 100,000 people while Hawaii and Alaksa have the lowest deaths per 100,000.**
+
+2. Download the data file capturing total COVID-19 cases and deaths by state, "COVID_cases_deaths_total.csv". This data file contains three variables, state_abbrev (abbreviation of the state), tot_cases (total COVID-19 confirmed cases in the state) and tot_death (total COVID-19 deaths in the state). Join this data with the state population data file, "state_population2019.csv". Calculate the number of statewide COVID-19 deaths per 100,000 population of the state. This will be equal to tot_death divided by state_pop2019 and multiplied by 100,000. Join this statewide data to the prison data using the common variable, state_abbrev. Create a visualization comparing the prison COVID-19 death rate per 100,000 prisoners to the statewide COVID-19 death rate per 100,000 using a scatterplot and labeling the points for each state with the two-letter state abbreviation. Make your graph as clear and compelling as possible. Label all axes. Make sure it is easy for your end user to read and tell what it is that you are visualizing. Note that we used `geom_text_repel()` back in A5 so check the solutions there for some ideas as to how to add labels to the scatter points. This requires the `ggrepel` package.  Comment on the pattern you observe. Do the states with the highest rates of death in prisons also tend to have the highest statewide death rates? 
+
+```{r q2}
+cov_deaths <- read.csv("COVID_cases_deaths_total.csv")
+state_pop <- read.csv("state_population2019.csv")
+
+covid_temp <- left_join( cov_deaths, state_pop, by = "state_abbrev")%>%mutate(d_per_cap_st =(tot_death/state_pop2019)*100000)
+covid_kh <- left_join(cov_pris, covid_temp, by = "state_abbrev")
+
+ggplot(data = covid_kh, mapping = aes(x = d_per_cap, y = d_per_cap_st, label = state_abbrev)) + geom_point()+geom_text_repel()+labs(x = "Deaths in Prison per 100,000", y = "Deaths in States per 100,000", title = "Deaths in States vs Deaths in Prison for Covid-19 in the United States")
+
+```
+
+**Outside of New Jersey it doesn't appear that higher deaths in prison show higher deaths in the states overall, the other three states with the highest overall deaths in the state have relatively lower prison deaths.**
+
+3. Make sure to watch this week's lecture video about creating maps with R and visualizing spatial data. Please make sure to also read [Chapter 7](https://socviz.co/maps.html#maps) of SOCVIZ. You will need the package `usmap` for this question. Create a map that fills states according to their COVID-19 prison deaths per 100,000 prisoners. This should look similar to the maps with gradient fills such as Figure 7.10 in SOCVIZ so pay attention to options like the projection of the map that I discuss in the lecture video. Please experiment with different colors, options, etc. to make the map as beautiful and clear as you possibly can!
+
+```{r q3}
+map_kh <- map_data("state")
+covid_kh <- mutate(covid_kh, region = tolower(state))
+covid_map <- left_join(map_kh, covid_kh, by = "region")
+
+ggplot() +geom_polygon(data = covid_map, mapping = aes(x = long, y = lat, group = group, fill = d_per_cap)) + coord_map(projection = "albers", lat0 = 39, lat1 = 45) + scale_fill_gradient2(low = "red",
+                                mid = scales::muted("blue"),
+                                high = "red") +
+    labs(title = "Covid-19 Deaths per 100,000 in Prisons", fill = "Deaths per 100,000", x = "", y = "") +theme_map()
+
+```
+
+
+
+4. Create a map visual that colors states based on *the ratio* between prison confirmed cases per 100,000 prisoners and state confirmed cases per 100,000 population. This ratio is a measure of how many more cases there are in the prison popualtions relative to cases in the statewide populations. For example, if this ratio equals 2 then we have twice as many covid cases inside prisons than statewide. Comment on whether the states with the highest COVID-19 deaths appear to be similar to the states with the largest gap between prison cases and statewide cases. 
+
+```{r q4}
+covid_map <- mutate(covid_map, case_cap_p = (prison_cases/prison_pop)*100000, case_cap_state = (tot_cases /state_pop2019)*100000,ratio = case_cap_p /case_cap_state)
+4
+ggplot() +geom_polygon(data = covid_map, mapping = aes(x = long, y = lat, group = group, fill = ratio)) + coord_map(projection = "albers", lat0 = 39, lat1 = 45) + scale_fill_gradient2(low = "red",
+                                mid = scales::muted("blue"),
+                                high = "red") +
+    labs(title = "Ratio in Cases in Prisons and in the States from COVID-19", fill = "Ratio", x = "", y = "") +theme_map()
+```
+
+**It does not appear that the higher difference in case ratio leads to higher deaths as Vermont has the highest ration of prison cases and state cases and the death numbers from covid are fairly low there.**
+
+
+
+**DON'T FORGET TO PUT YOUR NAME IN THE INTEGRITY STATEMENT IN PART 1 AND SUMBIT YOUR HTML FILE TO TURNITIN!**
+    
+    
+
